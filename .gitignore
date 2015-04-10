@@ -26,3 +26,12 @@
 *.exe
 *.out
 *.app
+
+packages/
+obj/
+bin/
+.idea/
+*.mdf
+*.ldf
+**.suo
+*.v12.suo
