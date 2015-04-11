@@ -35,3 +35,7 @@ bin/
 *.ldf
 **.suo
 *.v12.suo
+Debug/
+
+# database files
+*sdf
