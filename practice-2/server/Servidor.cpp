@@ -18,28 +18,56 @@
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
 
+ClientList clientList;
+
+void cleanUp() {
+	for (int i = 0; i < 10; i++)
+	{
+		Client *client = &clientList.clients[i];
+		if (client->socket == 0 && client->socket != INVALID_SOCKET)
+		{
+			closesocket(client->socket);
+			client->socket = INVALID_SOCKET;
+			client->used   = false;
+		}
+	}
+}
+
+void initializeClientList(ClientList list)
+{
+	list.current = NULL;
+	
+	for (int i = 0; i < 10; i++)
+	{
+		Client *client = &list.clients[i];
+		client->enabled = true;
+		client->id = 0;
+		client->socket = INVALID_SOCKET;
+		client->used = false;
+	}
+}
+
 
 DWORD WINAPI thread_Servidor(LPVOID lpParameter);
 extern DWORD WINAPI thread_ServerInstance(ClientList *lpParameter);
 
 DWORD WINAPI thread_Servidor(LPVOID lpParameter)
 {
-	// Create a WSADATA object called wsaData.
 	WSADATA wsaData;
 	int iResult;
 	SOCKET Server_Socket = INVALID_SOCKET;
 	Client clients[10];
-	ClientList clientList;
+	
 	clientList.clients = clients;
 	int count_socket = 0;
-	// Declare an addrinfo object that contains a sockaddr structure
+
+	initializeClientList(clientList);
+
 	struct addrinfo *result = NULL;
 	struct addrinfo hints;
 	int recvbuflen = DEFAULT_BUFLEN;
 
 	printf("Sistemas Distribuidos: Servidor MultiThread Inicializando ...\n");
-	printf("Este Servidor aceita conexoes de multiplos Clientes\n");
-	printf("Modo de Operacao: Servidor recebe uma mensagem do Cliente e retransmite de volta para o mesmo Cliente\n\n");
 
 	SocketParams *params;
 	params = (SocketParams *)lpParameter;
@@ -123,7 +151,7 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
 		clientList.clients[i].id = i + 1;
 		clientList.clients[i].used = clientList.clients[i].enabled = true;
 		clientList.clients[i].socket = accept(Server_Socket, NULL, NULL);
-		clientList.current = clientList.clients[i];
+		clientList.current = &clientList.clients[i];
 
 		if (clientList.clients[i].socket == INVALID_SOCKET)
 		{
@@ -140,5 +168,6 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
 		}
 		Sleep(10);
 	}
+
 	return 0;
 }

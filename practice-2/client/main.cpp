@@ -20,23 +20,18 @@ int main(int argc, char *argv[]);
 
 void intHandler(int dummy) {
 	cleanUp();
+	printf("\nBye\n");
 }
 
 SOCKET openOurVerySocket(SocketParams *params) {
-	// Create a WSADATA object called wsaData.
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
-	// Declare an addrinfo object that contains a sockaddr structure 
-	// and initialize these values.
-	struct addrinfo *result = NULL,
+	struct addrinfo
+		*result = NULL,
 		*ptr = NULL,
 		hints;
 
 	int iResult;
-	// Initialize Winsock  
-	// The WSAStartup function is called to initiate use of WS2_32.dll
-	// The MAKEWORD(2,2) parameter of WSAStartup makes a request for 
-	// version 2.2 of Winsock on the system
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0)
 	{
@@ -95,28 +90,33 @@ int main(int argc, char *argv[])
 
 	SocketParams params;
 	strcpy(params.port, DEFAULT_PORT);
-	//strcpy(params.ip, "127.0.0.1");	//localhost
 
 	if (argc != 2) {
-		printf("modo de usar: cliente ip_do_servidor\n");
+		printf("usage: client [server ip address] \n");
 		exit(1);
 	}
+
 	params.ip = argv[1];
-	params.family = AF_UNSPEC;	    // unspecified so that either an IPv6 or IPv4 address can be returned
-	params.socktype = SOCK_STREAM; // stream socket for the TCP protocol
-	params.protocol = IPPROTO_TCP;	 // TCP protocol
+	params.family = AF_UNSPEC;
+	params.socktype = SOCK_STREAM; 
+	params.protocol = IPPROTO_TCP;
 	
 	ClientSocket = openOurVerySocket(&params);
 
-	if (ClientSocket != NULL) {
-		ClienteSend = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)thread_Send, &ClientSocket, 0, 0);
-		ClienteReceive = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)thread_Receive, &ClientSocket, 0, 0);
-
-		WaitForSingleObject(ClienteSend, INFINITE);
-		WaitForSingleObject(ClienteReceive, INFINITE);
-
-		cleanUp();
+	if (ClientSocket == INVALID_SOCKET) {
+		printf("Error: could not establish connection with the server. Try again later.\n");
+		getchar();
+		exit(1);
 	}
 	
+	ClienteSend = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)thread_Send, &ClientSocket, 0, 0);
+	ClienteReceive = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)thread_Receive, &ClientSocket, 0, 0);
+
+	WaitForSingleObject(ClienteSend, INFINITE);
+	WaitForSingleObject(ClienteReceive, INFINITE);
+
+	cleanUp();
+	
+	getchar();
 	return 0;
 }

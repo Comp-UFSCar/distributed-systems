@@ -1,6 +1,7 @@
 #define DEFAULT_BUFLEN 512
-#define CLIENT_OP_DISABLE "%LpfCy_+75S27QQN"
-#define CLIENT_OP_ENABLE "PKYL9=6kG*VC4qzE"
+
+#define CLIENT_OP_MUTE "*mute"
+#define CLIENT_OP_RESTORE "*restore"
 
 typedef struct
 {
@@ -29,6 +30,6 @@ typedef struct
 
 typedef struct
 {
-	Client current;
+	Client *current;
 	Client *clients;
 } ClientList;

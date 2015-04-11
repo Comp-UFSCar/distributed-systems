@@ -10,5 +10,7 @@ extern HANDLE ServerInstance;
 extern HANDLE Servidor;
 extern SOCKET Server_Socket;
 
+static volatile bool keepRunning = false;
+
 #endif /* APPOBJECTS_H */
 

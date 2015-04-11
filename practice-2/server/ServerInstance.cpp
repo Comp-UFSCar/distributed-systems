@@ -16,37 +16,54 @@
 
 #include "AppObjects.h"
 
-bool checkOperation (message message, Client client){
-	if (!strcmp(message.buf, CLIENT_OP_DISABLE)) {
-		client.enabled = false;
+bool checkOperation(message message, Client *client){
+	if (!strcmp(message.buf, CLIENT_OP_MUTE)) {
+		client->enabled = false;
 		return true;
 	}
-	if (!strcmp(message.buf, CLIENT_OP_ENABLE)){
-		client.enabled = true;
+	if (!strcmp(message.buf, CLIENT_OP_RESTORE)){
+		client->enabled = true;
 		return true;
 	}
 
 	return false;
 }
 
-int sendAll(ClientList clientList, Client current, message message) {
-	for (int i = 0; i < 10; i++) {
-		if (!clientList.clients[i].used || i == current.id -1) {
+bool removeClient(Client *client)
+{
+	client->id = 0;
+	client->used = false;
+	client->enabled = true;
+
+	if (client->socket == 0 || client->socket == INVALID_SOCKET)
+	{
+		closesocket(client->socket);
+		client->socket = INVALID_SOCKET;
+
+		return true;
+	}
+
+	return false;
+}
+
+void sendAll(ClientList clientList, Client *current, message message)
+{
+	for (int i = 0; i < 10; i++)
+	{
+		Client *client = &clientList.clients[i];
+
+		if (!client->used || !client->enabled || i == current->id - 1
+			|| client->socket == 0 || client->socket == INVALID_SOCKET) {
 			continue;
 		}
 
-		int result = send(clientList.clients[i].socket, (const char *)&message, DEFAULT_BUFLEN, 0);
+		int result = send(client->socket, (const char *)&message, sizeof(message), 0);
 
 		if (result == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(clientList.clients[i].socket);
+			printf("Send failed with error: %d\n", WSAGetLastError());
+			removeClient(client);
 			WSACleanup();
-			return 1;
 		}
-
-		return 0;
-		/*printf("Bytes sent: %d\n", result);
-		printf("Server sent = %s\n\n", message.buf);*/
 	}
 }
 
@@ -60,19 +77,19 @@ DWORD WINAPI thread_ServerInstance(ClientList *lpParameter)
 
 	ClientList clientList;
 	clientList = *lpParameter;
-	Client current = clientList.current;
+	Client *current = clientList.current;
 	message message;
 
 	/* Receive until the peer shuts down the connection */
 	while (true)
 	{
-		result = recv(current.socket, (char *)&message, DEFAULT_BUFLEN, 0);
+		result = recv(current->socket, (char *)&message, sizeof(message), 0);
 
 		// Check for error or the closing of the connection
 		if (result == 0) break;
 		if (message.buf[0] == '0') { printf("Close: %s\n\n", message.name); break; }
 		if (result == -1) { printf("Close: %s\n\n", message.name); break; }
-		
+
 		printf("%s:  %s\n", message.name, message.buf);
 
 		bool isOperation = checkOperation(message, current);
@@ -80,10 +97,9 @@ DWORD WINAPI thread_ServerInstance(ClientList *lpParameter)
 			sendAll(clientList, current, message);
 		}
 
-		Sleep(10);	
+		Sleep(10);
 	}
-	
-	current.used = false;
-	closesocket(current.socket);
+
+	removeClient(current);
 	return 0;
 }
