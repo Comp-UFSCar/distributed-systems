@@ -14,6 +14,15 @@ ClientList clientList;
 void
 cleanUp()
 {
+    for (int i = 0; i < clientList.Length; i++)
+    {
+        Client *client = &clientList.clients[i];
+        if (client->socketAddress != NULL)
+        {
+            free(client->socketAddress);
+        }
+    }
+
     if (clientList.socket != INVALID_SOCKET)
         closesocket(clientList.socket);
 }
