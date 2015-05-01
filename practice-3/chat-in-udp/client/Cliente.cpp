@@ -23,8 +23,8 @@ void cleanUp()
 {
     keepRunning = 0;
 
-    if (ClientSocket != NULL)
-        closesocket(ClientSocket);
+    if (Channel.socket != NULL)
+        closesocket(Channel.socket);
 }
 
 bool checkOperation(message message)
@@ -34,12 +34,16 @@ bool checkOperation(message message)
 
 DWORD WINAPI thread_Receive(LPVOID lpParameter)
 {
-    SOCKET *socket = (SOCKET *)lpParameter;
     message message;
+    sockaddr theirs;
+    int size;
 
     while (keepRunning)
     {
-        int result = recv(*socket, (char *)&message, sizeof(message), 0);
+        int result = recvfrom(
+            Channel.socket, (char *)&message, sizeof(message), 0,
+            &theirs, &size
+        );
 
         if (keepRunning && result != 0)
             printf("%s:  %s\n>> ", message.name, message.buf);
@@ -52,8 +56,6 @@ DWORD WINAPI thread_Receive(LPVOID lpParameter)
 
 DWORD WINAPI thread_Send(LPVOID lpParameter)
 {
-    SOCKET *socket = (SOCKET *)lpParameter;
-
     message message;
     int result;
     char trash;
@@ -68,7 +70,12 @@ DWORD WINAPI thread_Send(LPVOID lpParameter)
         printf(">> ");
         gets(message.buf);
 
-        result = send(*socket, (const char *)&message, sizeof(message), 0);
+        result = sendto(
+            Channel.socket,
+            (const char *)&message, sizeof(message), 0,
+            Channel.addressInfo->ai_addr,
+            Channel.addressInfo->ai_addrlen
+        );
         if (result == SOCKET_ERROR) {
             printf("send failed with error: %d\n", WSAGetLastError());
             WSACleanup();
@@ -79,7 +86,11 @@ DWORD WINAPI thread_Send(LPVOID lpParameter)
     }
 
     message.buf[0] = '0';
-    result = send(*socket, (const char *)&message, (int)sizeof(message), 0);
-
+    result = sendto(
+        Channel.socket,
+        (const char *)&message, (int)sizeof(message), 0,
+        Channel.addressInfo->ai_addr,
+        Channel.addressInfo->ai_addrlen
+    );
     return 0;
 }
