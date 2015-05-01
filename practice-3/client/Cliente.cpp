@@ -155,7 +155,7 @@ DWORD WINAPI thread_Cliente(LPVOID lpParameter)
 		status = 'A';
 		while ((status != 'f') && (status != 'c'))
 		{
-			status = getchar();  Sleep(10);
+			status = getchar();  Sleep(10); getchar();
 		}
 	}
 
