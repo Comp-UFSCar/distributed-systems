@@ -23,13 +23,15 @@ typedef struct
 typedef struct
 {
 	int id;
-	SOCKET socket;
 	bool used;
 	bool enabled;
+    char *name;
+    struct sockaddr *socketAddress;
 } Client;
 
 typedef struct
 {
-	Client *current;
+    SOCKET socket;
 	Client *clients;
+    int Length;
 } ClientList;

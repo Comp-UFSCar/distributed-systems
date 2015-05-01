@@ -122,7 +122,7 @@
   <ItemGroup>
     <ClCompile Include="AppObjects.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ServerInstance.cpp" />
+    <ClCompile Include="Chat.cpp" />
     <ClCompile Include="Servidor.cpp" />
   </ItemGroup>
   <ItemGroup>
