@@ -71,7 +71,7 @@ removeClient(Client *client)
 }
 
 void
-sendAll(ClientList *clientList, Client *current, message message)
+SendAll(ClientList *clientList, Client *current, message message)
 {
 	for (int i = 0; i < clientList->Length; i++)
 	{
@@ -83,10 +83,10 @@ sendAll(ClientList *clientList, Client *current, message message)
             continue;
 
         // create socket address based on sa_data.
-        sockaddr client_sock;       
+        sockaddr client_sock;
         strcpy(client_sock.sa_data, client->socketAddress);
         client_sock.sa_family = AF_INET;
-        int length = strlen(client_sock.sa_data);
+        int length = sizeof(client_sock);
 
         int result = sendto(
             clientList->socket, (const char *)&message, sizeof(message), 0,
@@ -131,7 +131,7 @@ RunChat(ClientList *clientList)
         bool isOperation = checkOperation(message, current);
         
         if (!isOperation)
-            sendAll(clientList, current, message);
+            SendAll(clientList, current, message);
 
         Sleep(10);
     }
