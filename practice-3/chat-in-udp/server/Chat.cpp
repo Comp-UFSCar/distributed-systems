@@ -14,16 +14,6 @@
 
 #include "AppObjects.h"
 
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET)
-    {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
 bool checkOperation(message message, Client *client){
 	if (!strcmp(message.buf, CLIENT_OP_MUTE)) {
 		client->enabled = false;
@@ -37,6 +27,8 @@ bool checkOperation(message message, Client *client){
 	return false;
 }
 
+///
+/// Find a client by their address.
 Client*
 FindOrCreate(ClientList *clientList, sockaddr *socketAddress)
 {
@@ -53,8 +45,7 @@ FindOrCreate(ClientList *clientList, sockaddr *socketAddress)
         }
         else
         {
-            in_addr *socket_in_addr = (in_addr *)get_in_addr(socketAddress);
-            if (current->socketAddress == socket_in_addr->S_un.S_addr)
+            if (strcmp(socketAddress->sa_data, current->socketAddress) == 0)
             {
                 return current;
             }
@@ -64,7 +55,7 @@ FindOrCreate(ClientList *clientList, sockaddr *socketAddress)
     // Client not found (it's a new client). Allocate position for them.
     if (empty != NULL)
     {
-        empty->socketAddress = ((in_addr *)get_in_addr(socketAddress))->S_un.S_addr;
+        strcpy(empty->socketAddress, socketAddress->sa_data);
         empty->used = true;
     }
 
@@ -86,22 +77,26 @@ sendAll(ClientList *clientList, Client *current, message message)
 	{
 		Client *client = &clientList->clients[i];
 
-		if (!client->used || !client->enabled || i == current->id - 1
-			|| client->socketAddress == NULL) {
-			continue;
-		}
+		if (!client->used || !client->enabled || i == current->id - 1 || client->socketAddress == NULL)
+            continue;
 
-        /*int result = sendto(
-            clientList->socket,
-            (const char *)&message, sizeof(message), 0,            
-            client->addressInfo->ai_addr, client->addressInfo->ai_addrlen
+        // create socket address based on sa_data.
+        sockaddr client_sock;       
+        strcpy(client_sock.sa_data, client->socketAddress);
+        client_sock.sa_family = AF_INET;
+        int length = strlen(client_sock.sa_data);
+
+        int result = sendto(
+            clientList->socket, (const char *)&message, sizeof(message), 0,
+            &client_sock, length
         );
-		if (result == SOCKET_ERROR)
+		
+        if (result == SOCKET_ERROR)
         {
 			printf("Send failed with error: %d\n", WSAGetLastError());
 			removeClient(client);
 			WSACleanup();
-		}*/
+		}
 	}
 }
 
@@ -132,9 +127,9 @@ RunChat(ClientList *clientList)
         printf("%s:  %s\n", message.name, message.buf);
 
         bool isOperation = checkOperation(message, current);
-        if (!isOperation) {
+        
+        if (!isOperation)
             sendAll(clientList, current, message);
-        }
 
         Sleep(10);
     }

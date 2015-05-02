@@ -28,7 +28,6 @@ initializeClientList(ClientList list)
 		Client *client = &list.clients[i];
 		client->enabled = true;
 		client->id = 0;
-        client->socketAddress = NULL;
 		client->used = false;
 	}
 }

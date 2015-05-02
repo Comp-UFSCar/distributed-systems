@@ -24,7 +24,17 @@ void cleanUp()
     keepRunning = 0;
 
     if (Channel.socket != NULL)
+    {
+        message message;
+        message.buf[0] = '0';
+        int result = sendto(
+            Channel.socket,
+            (const char *)&message, (int)sizeof(message), 0,
+            Channel.addressInfo->ai_addr,
+            Channel.addressInfo->ai_addrlen
+            );
         closesocket(Channel.socket);
+    }
 }
 
 bool checkOperation(message message)
@@ -45,7 +55,7 @@ DWORD WINAPI thread_Receive(LPVOID lpParameter)
             &theirs, &size
         );
 
-        if (keepRunning && result > 0)
+        if (keepRunning && result > -1)
             printf("%s:  %s\n>> ", message.name, message.buf);
 
         Sleep(10);
@@ -85,12 +95,5 @@ DWORD WINAPI thread_Send(LPVOID lpParameter)
         Sleep(10);
     }
 
-    message.buf[0] = '0';
-    result = sendto(
-        Channel.socket,
-        (const char *)&message, (int)sizeof(message), 0,
-        Channel.addressInfo->ai_addr,
-        Channel.addressInfo->ai_addrlen
-    );
     return 0;
 }

@@ -26,7 +26,7 @@ typedef struct
 	bool used;
 	bool enabled;
     char *name;
-    unsigned long socketAddress;
+    char socketAddress[14];
 } Client;
 
 typedef struct
