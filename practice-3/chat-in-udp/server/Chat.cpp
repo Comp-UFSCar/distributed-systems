@@ -77,7 +77,9 @@ sendAll(ClientList *clientList, Client *current, message message)
 	{
 		Client *client = &clientList->clients[i];
 
-		if (!client->used || !client->enabled || i == current->id - 1 || client->socketAddress == NULL)
+		if (client == current
+            || !client->used || !client->enabled
+            || client->socketAddress == NULL)
             continue;
 
         // create socket address based on sa_data.

@@ -86,7 +86,18 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
 		return 1;
 	}
 
+    iResult = bind(clientList.socket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
+        printf("bind failed with error: %d\n", WSAGetLastError());
+        freeaddrinfo(result);
+        closesocket(clientList.socket);
+        WSACleanup();
+        getchar();
+        return 1;
+    }
+
     RunChat(&clientList);
     
+    getchar(); 
     return 0;
 }
