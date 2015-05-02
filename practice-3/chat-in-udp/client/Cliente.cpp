@@ -56,7 +56,9 @@ DWORD WINAPI thread_Receive(LPVOID lpParameter)
         );
 
         if (keepRunning && result > -1)
+        {
             printf("%s:  %s\n>> ", message.name, message.buf);
+        }
 
         Sleep(10);
     }
