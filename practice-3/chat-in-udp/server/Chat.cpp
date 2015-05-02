@@ -38,34 +38,34 @@ bool checkOperation(message message, Client *client){
 }
 
 Client*
-FindOrCreate(ClientList *clientList, sockaddr socketAddress)
+FindOrCreate(ClientList *clientList, sockaddr *socketAddress)
 {
     Client *empty = NULL;
     
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < clientList->Length; i++)
     {
         Client *current = &clientList->clients[i];
 
+        // Find first position available.
         if (!current->used)
         {
-            // Find first position available.
             if (empty == NULL) empty = current;
         }
         else
         {
-            sockaddr *currentSocketAddress = current->socketAddress;
-
-            // Compare both addresses...
-            // if equal, return current. Continue, otherwise.
+            in_addr *socket_in_addr = (in_addr *)get_in_addr(socketAddress);
+            if (current->socketAddress == socket_in_addr->S_un.S_addr)
+            {
+                return current;
+            }
         }
     }
 
-    // Client not found (it's a new client). Allocate all shit for him.
+    // Client not found (it's a new client). Allocate position for them.
     if (empty != NULL)
     {
-        sockaddr *newSocketAddress = (sockaddr *)malloc(sizeof(sockaddr));
-        strcpy(newSocketAddress->sa_data, socketAddress.sa_data);
-        newSocketAddress->sa_family = socketAddress.sa_family;
+        empty->socketAddress = ((in_addr *)get_in_addr(socketAddress))->S_un.S_addr;
+        empty->used = true;
     }
 
     return empty;
@@ -82,7 +82,7 @@ removeClient(Client *client)
 void
 sendAll(ClientList *clientList, Client *current, message message)
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < clientList->Length; i++)
 	{
 		Client *client = &clientList->clients[i];
 
@@ -115,11 +115,9 @@ RunChat(ClientList *clientList)
     while (true)
     {
         int result = recvfrom(clientList->socket, (char *)&message, sizeof(message), 0, &clientSocketAddress, &size);
-        
-        // This might be result <= 0. I'm not sure if result is a status-code or the length of the retrieved data.
         if (result < 0) continue;
 
-        Client *current = FindOrCreate(clientList, clientSocketAddress);
+        Client *current = FindOrCreate(clientList, &clientSocketAddress);
 
         if (message.buf[0] == '0')
         {
