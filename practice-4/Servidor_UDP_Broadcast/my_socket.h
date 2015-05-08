@@ -1,9 +1,12 @@
+#define DEFAULT_PORT "27015"
 #define DEFAULT_BUFLEN 512
 
+#define OPERATION_REGISTER 10
+#define OPERATION_RETRIEVE 11
 
 typedef struct
 {
-  char* ip;            /* multicast IP address */
+  char* ip;
   char port[6];
   int family;
   int socktype;
@@ -11,10 +14,13 @@ typedef struct
   int flags;
 } SocketParams;
 
-typedef struct
-{
-  char name[15];
-  int nro_msg;
-  char buf[DEFAULT_BUFLEN];
-} message;
+typedef struct {
+    char name[30];
+    char ip[30];
+    char port[6];
+} entry;
 
+typedef struct {
+    entry entry;
+    int operation;
+} Message;
