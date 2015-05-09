@@ -45,19 +45,23 @@ NameEntry QueryName(char *name)
     NamesMessage m;
     
     m.operation = OPERATION_QUERY;
+    strcpy(m.entry.ip, "127.0.0.1");
+    strcpy(m.entry.port, CLIENT_UDP_PORT);
     strcpy(m.entry.name, name);
 
     serverResponse = sendto(namesServerSocket, (const char *)&m, (int)sizeof(m), 0, ptr->ai_addr, ptr->ai_addrlen);
     AssertNotEquals(serverResponse, SOCKET_ERROR, "sendto");
 
-    printf("Done.\n");
-
     NameEntry entry;
+
+    /// TODO:
+    /// Receives answer from the DNS server.
 
     strcpy(entry.name, "");
     strcpy(entry.ip, "");
     strcpy(entry.port, "");
-
+    
+    printf("Done.\n");
     return entry;
 }
 

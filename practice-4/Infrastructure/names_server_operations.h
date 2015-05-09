@@ -6,8 +6,8 @@
 
 #define NAMES_SERVER_PORT "7836"
 #define FILES_SERVER_NAME "fileserver.com"
-#define FILES_NAMES_PORT  "27216"
-#define CLIENT_NAMES_PORT "9873"
+#define FILES_UDP_PORT  "27216"
+#define CLIENT_UDP_PORT "9873"
 
 typedef struct {
     char name[30];
