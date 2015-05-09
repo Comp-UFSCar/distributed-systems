@@ -49,22 +49,21 @@ NameEntry QueryName(char *name)
     strcpy(m.entry.port, CLIENT_UDP_PORT);
     strcpy(m.entry.name, name);
 
+    /// Asks which one is the file server.
     serverResponse = sendto(namesServerSocket, (const char *)&m, (int)sizeof(m), 0, ptr->ai_addr, ptr->ai_addrlen);
     AssertNotEquals(serverResponse, SOCKET_ERROR, "sendto");
 
-    NameEntry entry;
+    /// Retrieve its answer.
+    struct sockaddr_storage their_addr;
+    size_t addr_len = sizeof their_addr;
 
-    /// TODO:
-    /// Receives answer from the DNS server.
-
-    strcpy(entry.name, "");
-    strcpy(entry.ip, "");
-    strcpy(entry.port, "");
+    serverResponse = recvfrom(namesServerSocket, (char *)&m, (int)sizeof(m), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
+    AssertPositive(serverResponse, "recvfrom");
 
     closesocket(namesServerSocket);
     
     printf("Done.\n");
-    return entry;
+    return m.entry;
 }
 
 DWORD WINAPI t_client(LPVOID lpParameter)

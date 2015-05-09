@@ -39,12 +39,13 @@ void tableRegister(char* name, char* ip, char* port)
     index++;
 }
 
-NameEntry tableQuery(char* name) {
+NameEntry tableQuery(char* name)
+{
     printf("Request for {%s}... ", name);
 
     for (int i = 0; i < index; i++)
     {
-        if (strcmp(name, table[i].name))
+        if (!strcmp(name, table[i].name))
         {
             printf("found.\n");
             return table[i];
@@ -53,7 +54,7 @@ NameEntry tableQuery(char* name) {
 
     printf("not found.\n");
 
-    // Returns an error Message if server not found by name
+    /// Returns an error message if server hasn't found the searched name.
     NameEntry error;
     strcpy(error.name, "Server not found!");
     strcpy(error.ip, "ERROR");
@@ -73,7 +74,7 @@ bool CheckOperation(NamesMessage *m)
     else if (m->operation == OPERATION_QUERY)
     {
         isOperation = true;
-        tableQuery(m->entry.name);
+        NameEntry entry = tableQuery(m->entry.name);
     }
 
     return isOperation;
@@ -89,8 +90,6 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
     struct addrinfo hints;
     int recvbuflen = DEFAULT_BUFLEN;
 
-    struct sockaddr_storage their_addr;
-    size_t addr_len;
     char s[INET6_ADDRSTRLEN];
 
     int flag_on = 1;
@@ -127,13 +126,22 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
     {
         NamesMessage m;
 
-        printf("waiting...\n");
-        addr_len = sizeof their_addr;
+        struct sockaddr_storage their_addr;
+        size_t addr_len = sizeof their_addr;
 
         response = recvfrom(Server_Socket, (char *)&m, (int)sizeof(m), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
         if (response < 0) break;
         
-        bool isOperation = CheckOperation(&m);
+        if (m.operation == OPERATION_REGISTER)
+        {
+            tableRegister(m.entry.name, m.entry.ip, m.entry.port);
+        }
+        else if (m.operation == OPERATION_QUERY)
+        {
+            m.entry = tableQuery(m.entry.name);
+            response = sendto(Server_Socket, (const char *)&m, (int)sizeof(m), 0, (const struct sockaddr *)&their_addr, addr_len);
+
+        }
 
         Sleep(10);
     }
