@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>server</ProjectName>
-    <ProjectGuid>{E84C8CD8-A8A9-4558-9974-F6CC6E824FEC}</ProjectGuid>
+    <ProjectName>client</ProjectName>
+    <ProjectGuid>{AD2E299C-8187-43FF-A14B-6EB065338245}</ProjectGuid>
     <RootNamespace>Modelo</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -121,12 +121,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AppObjects.cpp" />
+    <ClCompile Include="Cliente.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Servidor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppObjects.h" />
-    <ClInclude Include="my_socket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
