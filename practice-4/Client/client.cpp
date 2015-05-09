@@ -93,19 +93,18 @@ DWORD WINAPI t_client(LPVOID lpParameter)
     NameEntry entry = QueryName(fileServerName);
 
     ZeroMemory(&hints, sizeof(hints));
-
     hints.ai_family = params->family;
     hints.ai_socktype = params->socktype;
     hints.ai_protocol = params->protocol;
 
-    response = getaddrinfo(params->ip, params->port, &hints, &result);
+    response = getaddrinfo(entry.ip, entry.port, &hints, &result);
     AssertZero(response, "getaddrinfo");
 
     for (ptr = result; ptr != NULL; ptr = ptr->ai_next)
     {
         ClientSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
         AssertValidSocket(ClientSocket, "ClientSocket");
-        
+     
         response = connect(ClientSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
         if (response == SOCKET_ERROR)
         {
@@ -137,7 +136,8 @@ DWORD WINAPI t_client(LPVOID lpParameter)
         }
 
         response = send(ClientSocket, (const char *)&m, (int)sizeof(m), 0);
-        if (response == SOCKET_ERROR) {
+        if (response == SOCKET_ERROR)
+        {
             printf("send failed with error: %d\n", response);
             closesocket(ClientSocket);
             WSACleanup();
