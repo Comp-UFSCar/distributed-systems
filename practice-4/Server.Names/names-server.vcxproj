@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>names-server</ProjectName>
+    <ProjectName>Server.Names</ProjectName>
     <ProjectGuid>{32DF9424-BD08-4A8A-9471-D4ECEB7D08B9}</ProjectGuid>
     <RootNamespace>Modelo</RootNamespace>
   </PropertyGroup>
@@ -126,7 +126,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppObjects.h" />
-    <ClInclude Include="my_socket.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
+      <Project>{a2ae3183-7423-416d-8df3-3b15695e7fb4}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,8 +1,6 @@
 #include <winsock2.h>
 #include "AppObjects.h"
-#include "my_socket.h"
-
-#define DEFAULT_PORT "5000"
+#include "..\Infrastructure\communication.h"
 
 extern DWORD WINAPI thread_Servidor(LPVOID lpParameter);
 void main(void);
@@ -11,7 +9,7 @@ void main(void)
 {
 	SocketParams params;
 	
-	strcpy(params.port, DEFAULT_PORT);
+	strcpy(params.port, FILES_SERVER_PORT);
 	
 	params.family = AF_INET;
 	params.socktype = SOCK_STREAM;

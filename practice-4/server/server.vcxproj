@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>server</ProjectName>
+    <ProjectName>Server</ProjectName>
     <ProjectGuid>{E84C8CD8-A8A9-4558-9974-F6CC6E824FEC}</ProjectGuid>
     <RootNamespace>Modelo</RootNamespace>
   </PropertyGroup>

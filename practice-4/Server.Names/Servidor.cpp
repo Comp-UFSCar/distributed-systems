@@ -6,12 +6,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "AppObjects.h"
-#include "my_socket.h"
+#include "..\Infrastructure\communication.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 
 int index = 0;
-entry table[TABLE_SIZE];
+NameEntry table[TABLE_SIZE];
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -33,13 +33,13 @@ void tableRegister(char* name, char* ip, char* port)
     }
 }
 
-entry tableQuery(char* name) {
+NameEntry tableQuery(char* name) {
     for (int i = 0; i < index; i++)
         if (strcmp(name, table[i].name))
             return table[i];
 
     // Returns an error Message if server not found by name
-    entry error;
+    NameEntry error;
     strcpy(error.name, "Server not found!");
     strcpy(error.ip, "ERROR");
     strcpy(error.port, "ERROR");
@@ -47,18 +47,18 @@ entry tableQuery(char* name) {
     return error;
 }
 
-bool CheckOperation(Message *message)
+bool CheckOperation(NamesMessage *m)
 {
     bool isOperation = false;
-    if (message->operation == OPERATION_REGISTER)
+    if (m->operation == OPERATION_REGISTER)
     {
         isOperation = true;
-        tableRegister(message->entry.name, message->entry.ip, message->entry.port);
+        tableRegister(m->entry.name, m->entry.ip, m->entry.port);
     }
-    else if (message->operation == OPERATION_RETRIEVE)
+    else if (m->operation == OPERATION_RETRIEVE)
     {
         isOperation = true;
-        tableQuery(message->entry.name);
+        tableQuery(m->entry.name);
     }
 
     return isOperation;
@@ -138,19 +138,19 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
 
     while (true)
     {
-        Message message;
+        NamesMessage m;
 
         printf("listener: waiting to recvfrom...\n");
         addr_len = sizeof their_addr;
 
-        iResult = recvfrom(Server_Socket, (char *)&message, (int)sizeof(message), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
+        iResult = recvfrom(Server_Socket, (char *)&m, (int)sizeof(m), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
         if (iResult == -1)
         {
             printf("Erro-Close\n\n");
             break;
         }
 
-        bool isOperation = CheckOperation(&message);
+        bool isOperation = CheckOperation(&m);
 
         printf("Listener: got packet from %s\n", inet_ntop(their_addr.ss_family,
             get_in_addr((struct sockaddr *)&their_addr), s, sizeof s));

@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "AppObjects.h"
-#include "my_socket.h"
-
-#define DEFAULT_PORT "5000"
+#include "..\Infrastructure\communication.h"
 
 extern DWORD WINAPI thread_Cliente(LPVOID lpParameter);
 int main(int argc, char *argv[]);
@@ -11,7 +9,7 @@ int main(int argc, char *argv[]);
 int main(int argc, char *argv[])
 {
     SocketParams params;
-    strcpy(params.port, DEFAULT_PORT);
+    strcpy(params.port, CLIENT_PORT);
 
     if (argc != 2)
     {

@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "AppObjects.h"
-#include "my_socket.h"
 #include <string>
 #include <cstdio>
 #include <iostream>
+#include "..\Infrastructure\communication.h"
 
 using namespace std;
 
@@ -36,7 +36,7 @@ DWORD WINAPI thread_Cliente(LPVOID lpParameter)
 
 	int iResult;
 	int recvbuflen = DEFAULT_BUFLEN;
-	message msg1;
+	Message msg1;
 	char scanTrash;
 	char response[DEFAULT_BUFLEN];
 
@@ -96,7 +96,7 @@ DWORD WINAPI thread_Cliente(LPVOID lpParameter)
 		scanf("%c", &scanTrash);
 		if (msg1.nro_msg == 4)
 		{
-			printf("Insert your message: ");
+			printf("Insert your Message: ");
 			gets(msg1.buf);
 		}
 		else
@@ -117,7 +117,7 @@ DWORD WINAPI thread_Cliente(LPVOID lpParameter)
 		InitString(response, DEFAULT_BUFLEN);
 		iResult = recv(ClientSocket, (char *)&response, DEFAULT_BUFLEN, 0);
 
-		printf("Client received-message: %s\n\n", response);
+		printf("Client received-Message: %s\n\n", response);
 
 		Sleep(10);
 
