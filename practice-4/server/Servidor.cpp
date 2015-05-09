@@ -42,6 +42,8 @@ void RegisterName(NameEntry *entry)
     response = sendto(namesServerSocket, (const char *)&m, (int)sizeof(m), 0, ptr->ai_addr, ptr->ai_addrlen);
     AssertNotEquals(response, SOCKET_ERROR, "sendto");
 
+    closesocket(namesServerSocket);
+
     printf("Done.\n");
 }
 

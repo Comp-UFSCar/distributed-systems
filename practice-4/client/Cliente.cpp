@@ -60,6 +60,8 @@ NameEntry QueryName(char *name)
     strcpy(entry.name, "");
     strcpy(entry.ip, "");
     strcpy(entry.port, "");
+
+    closesocket(namesServerSocket);
     
     printf("Done.\n");
     return entry;
