@@ -1,12 +1,13 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "ex1.vcxproj", "{E84C8CD8-A8A9-4558-9974-F6CC6E824FEC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client", "client\client.vcxproj", "{AD2E299C-8187-43FF-A14B-6EB065338245}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "names-server", "..\names-server\names-server.vcxproj", "{32DF9424-BD08-4A8A-9471-D4ECEB7D08B9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "server\server.vcxproj", "{E84C8CD8-A8A9-4558-9974-F6CC6E824FEC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client", "..\client\client.vcxproj", "{AD2E299C-8187-43FF-A14B-6EB065338245}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "names-server", "names-server\names-server.vcxproj", "{32DF9424-BD08-4A8A-9471-D4ECEB7D08B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +15,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AD2E299C-8187-43FF-A14B-6EB065338245}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AD2E299C-8187-43FF-A14B-6EB065338245}.Debug|Win32.Build.0 = Debug|Win32
+		{AD2E299C-8187-43FF-A14B-6EB065338245}.Release|Win32.ActiveCfg = Release|Win32
+		{AD2E299C-8187-43FF-A14B-6EB065338245}.Release|Win32.Build.0 = Release|Win32
 		{E84C8CD8-A8A9-4558-9974-F6CC6E824FEC}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E84C8CD8-A8A9-4558-9974-F6CC6E824FEC}.Debug|Win32.Build.0 = Debug|Win32
 		{E84C8CD8-A8A9-4558-9974-F6CC6E824FEC}.Release|Win32.ActiveCfg = Release|Win32
@@ -22,10 +27,6 @@ Global
 		{32DF9424-BD08-4A8A-9471-D4ECEB7D08B9}.Debug|Win32.Build.0 = Debug|Win32
 		{32DF9424-BD08-4A8A-9471-D4ECEB7D08B9}.Release|Win32.ActiveCfg = Release|Win32
 		{32DF9424-BD08-4A8A-9471-D4ECEB7D08B9}.Release|Win32.Build.0 = Release|Win32
-		{AD2E299C-8187-43FF-A14B-6EB065338245}.Debug|Win32.ActiveCfg = Debug|Win32
-		{AD2E299C-8187-43FF-A14B-6EB065338245}.Debug|Win32.Build.0 = Debug|Win32
-		{AD2E299C-8187-43FF-A14B-6EB065338245}.Release|Win32.ActiveCfg = Release|Win32
-		{AD2E299C-8187-43FF-A14B-6EB065338245}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
