@@ -3,12 +3,15 @@
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include "AppObjects.h"
 #include "..\Infrastructure\communication.h"
-#include "..\Infrastructure\validation.h"
 #include "..\Infrastructure\names_server_operations.cpp"
 
 #pragma comment (lib, "Ws2_32.lib")
+
+DWORD WINAPI t_server(LPVOID lpParameter);
+extern DWORD WINAPI t_server_instance(SOCKET *lpParameter);
 
 void RegisterName(NameEntry *entry)
 {
@@ -47,13 +50,10 @@ void RegisterName(NameEntry *entry)
     printf("Done.\n");
 }
 
-DWORD WINAPI thread_Servidor(LPVOID lpParameter);
-extern DWORD WINAPI thread_ServerInstance(SOCKET *lpParameter);
-
-DWORD WINAPI thread_Servidor(LPVOID lpParameter)
+DWORD WINAPI t_server(LPVOID lpParameter)
 {
     int response;
-    SOCKET Server_Socket = INVALID_SOCKET;
+    SOCKET ServerSocket = INVALID_SOCKET;
     SOCKET Server_Soc[10];
     int count_socket = 0;
     struct addrinfo *result = NULL;
@@ -86,20 +86,20 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
     response = getaddrinfo(NULL, params->port, &hints, &result);
     AssertZero(response, "getaddrinfo");
     
-    Server_Socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    AssertValidSocket(Server_Socket, "socket");
+    ServerSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    AssertValidSocket(ServerSocket, "socket");
     
-    response = bind(Server_Socket, result->ai_addr, (int)result->ai_addrlen);
+    response = bind(ServerSocket, result->ai_addr, (int)result->ai_addrlen);
     AssertNotEquals(response, SOCKET_ERROR, "bind");
     
-    response = listen(Server_Socket, SOMAXCONN);
+    response = listen(ServerSocket, SOMAXCONN);
     AssertNotEquals(response, SOCKET_ERROR, "listen");
 
     while (true)
     {
         printf("Waiting...\n");
 
-        Server_Soc[count_socket] = accept(Server_Socket, NULL, NULL);
+        Server_Soc[count_socket] = accept(ServerSocket, NULL, NULL);
         if (Server_Soc[count_socket] == INVALID_SOCKET)
         {
             printf("accept failed with error: %d\n", INVALID_SOCKET);
@@ -108,11 +108,12 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
         }
         else
         {
-            ServerInstance = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)thread_ServerInstance, &Server_Soc[count_socket], 0, 0);
+            ServerInstance = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)t_server_instance, &Server_Soc[count_socket], 0, 0);
             count_socket++;
         }
 
         Sleep(10);
     }
+
     return 0;
 }

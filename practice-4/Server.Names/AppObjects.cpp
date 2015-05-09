@@ -1,5 +1,5 @@
 #include <windows.h>
 
 HANDLE Servidor;
-SOCKET Server_Socket;
+SOCKET ServerSocket;
 bool running = true;

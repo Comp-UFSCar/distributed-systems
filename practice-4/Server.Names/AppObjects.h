@@ -7,8 +7,6 @@
 #include <windows.h>
 
 extern HANDLE Servidor;
-extern SOCKET Server_Socket;
-
-extern bool running;
+extern SOCKET ServerSocket;
 
 #endif /* APPOBJECTS_H */

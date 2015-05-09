@@ -80,10 +80,10 @@ bool CheckOperation(NamesMessage *m)
     return isOperation;
 }
 
-DWORD WINAPI thread_Servidor(LPVOID lpParameter)
+DWORD WINAPI t_server(LPVOID lpParameter)
 {
     int response;
-    SOCKET Server_Socket = INVALID_SOCKET;
+    SOCKET ServerSocket = INVALID_SOCKET;
     int count_socket = 0;
 
     struct addrinfo *result = NULL;
@@ -113,23 +113,23 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
     response = getaddrinfo(NULL, params->port, &hints, &result);
     AssertZero(response, "getaddrinfo");
 
-    Server_Socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    AssertValidSocket(Server_Socket, "Server_Socket");
+    ServerSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    AssertValidSocket(ServerSocket, "ServerSocket");
     
-    response = setsockopt(Server_Socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag_on, sizeof(flag_on));
+    response = setsockopt(ServerSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag_on, sizeof(flag_on));
     AssertPositive(response, "setsockopt");
 
-    response = bind(Server_Socket, result->ai_addr, (int)result->ai_addrlen);
+    response = bind(ServerSocket, result->ai_addr, (int)result->ai_addrlen);
     AssertNotEquals(response, SOCKET_ERROR, "bind");
     
-    while (running)
+    while (true)
     {
         NamesMessage m;
 
         struct sockaddr_storage their_addr;
         size_t addr_len = sizeof their_addr;
 
-        response = recvfrom(Server_Socket, (char *)&m, (int)sizeof(m), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
+        response = recvfrom(ServerSocket, (char *)&m, (int)sizeof(m), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
         if (response < 0) break;
         
         if (m.operation == OPERATION_REGISTER)
@@ -139,13 +139,12 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
         else if (m.operation == OPERATION_QUERY)
         {
             m.entry = tableQuery(m.entry.name);
-            response = sendto(Server_Socket, (const char *)&m, (int)sizeof(m), 0, (const struct sockaddr *)&their_addr, addr_len);
+            response = sendto(ServerSocket, (const char *)&m, (int)sizeof(m), 0, (const struct sockaddr *)&their_addr, addr_len);
 
         }
 
         Sleep(10);
     }
 
-    closesocket(Server_Socket);
     return 0;
 }

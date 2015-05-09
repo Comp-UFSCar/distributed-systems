@@ -1,23 +1,30 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include "AppObjects.h"
 #include "..\Infrastructure\communication.h"
 
 extern DWORD WINAPI t_client(LPVOID lpParameter);
-int main(int argc, char *argv[]);
+
+void handler(int dummy)
+{
+    if (ClientSocket != INVALID_SOCKET)
+    {
+        closesocket(ClientSocket);
+        WSACleanup();
+        
+        ClientSocket = INVALID_SOCKET;
+
+        printf("\nbye.\n");
+    }
+}
 
 int main(int argc, char *argv[])
 {
+    signal(SIGINT, handler);
+
     SocketParams params;
     strcpy(params.port, CLIENT_PORT);
-
-    if (argc != 2)
-    {
-        printf("modo de usar: cliente ip_do_servidor\n");
-        exit(1);
-    }
-
-    params.ip = argv[1];
 
     params.family = AF_UNSPEC;
     params.socktype = SOCK_STREAM;
@@ -26,5 +33,6 @@ int main(int argc, char *argv[])
     Cliente = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)t_client, &params, 0, 0);
     WaitForSingleObject(Cliente, INFINITE);
 
-    getchar();
+    handler(0);
+    return 0;
 }

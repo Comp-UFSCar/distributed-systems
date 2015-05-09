@@ -7,16 +7,16 @@
 #include "..\Infrastructure\names_server_operations.h"
 
 
-extern DWORD WINAPI thread_Servidor(LPVOID lpParameter);
+extern DWORD WINAPI t_server(LPVOID lpParameter);
 
-void intHandler(int dummy)
+void handler(int dummy)
 {
-    running = false;
-
-    if (Server_Socket)
+    if (ServerSocket != INVALID_SOCKET)
     {
-        closesocket(Server_Socket);
-        Server_Socket = INVALID_SOCKET;
+        closesocket(ServerSocket);
+        ServerSocket = INVALID_SOCKET;
+    
+        printf("\nbye.\n");
     }
 
     WSACleanup();
@@ -24,7 +24,7 @@ void intHandler(int dummy)
 
 int main(int argc, char *argv[])
 {
-    if (signal(SIGINT, intHandler) == SIG_ERR)
+    if (signal(SIGINT, handler) == SIG_ERR)
         printf("\ncan't catch SIGINT\n");
 
 	SocketParams params;
@@ -36,6 +36,9 @@ int main(int argc, char *argv[])
 	params.protocol= IPPROTO_UDP;
 	params.flags = AI_PASSIVE;
 	
-	Servidor = CreateThread(0, 0,(LPTHREAD_START_ROUTINE) thread_Servidor, &params, 0, 0);
+	Servidor = CreateThread(0, 0,(LPTHREAD_START_ROUTINE) t_server, &params, 0, 0);
 	WaitForSingleObject(Servidor, INFINITE);
+
+    handler(0);
+    return 0;
 }

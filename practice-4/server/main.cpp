@@ -1,13 +1,30 @@
 #include <winsock2.h>
+#include <stdio.h>
+#include <signal.h>
 #include "AppObjects.h"
 #include "..\Infrastructure\communication.h"
 
-extern DWORD WINAPI thread_Servidor(LPVOID lpParameter);
-void main(void);
+extern DWORD WINAPI t_server(LPVOID lpParameter);
 
-void main(void)
+
+void handler(int dummy)
 {
-	SocketParams params;
+    if (ServerSocket != INVALID_SOCKET)
+    {
+        closesocket(ServerSocket);
+        WSACleanup();
+
+        ServerSocket = INVALID_SOCKET;
+
+        printf("\nbye.\n");
+    }
+}
+
+int main(void)
+{
+    signal(SIGINT, handler);
+    
+    SocketParams params;
 	
 	strcpy(params.port, FILES_SERVER_PORT);
 	
@@ -16,6 +33,9 @@ void main(void)
 	params.protocol= IPPROTO_TCP;
 	params.flags = AI_PASSIVE;
 
-	Servidor = CreateThread(0, 0,(LPTHREAD_START_ROUTINE) thread_Servidor, &params, 0, 0);
+	Servidor = CreateThread(0, 0,(LPTHREAD_START_ROUTINE) t_server, &params, 0, 0);
 	WaitForSingleObject(Servidor, INFINITE);
+
+    handler(0);
+    return 0;
 }

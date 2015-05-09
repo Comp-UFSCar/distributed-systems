@@ -10,100 +10,94 @@
 
 #pragma comment (lib, "Ws2_32.lib")
 
-using namespace std;
-
 void InitString(char* buffer, int length)
 {
-	for (int i = 0; i < length; i++)
-	{
-		buffer[i] = '\0';
-	}
+    for (int i = 0; i < length; i++)
+    {
+        buffer[i] = '\0';
+    }
 }
 
-DWORD WINAPI thread_ServerInstance(SOCKET *lpParameter);
-
-DWORD WINAPI thread_ServerInstance(SOCKET *lpParameter)
+DWORD WINAPI t_server_instance(SOCKET *lpParameter)
 {
-	int MessageLength;
-	struct addrinfo *result = NULL;
-	int iSendResult;
-	int recvbuflen = DEFAULT_BUFLEN;
+    Message m;
+    SOCKET t_socket = (SOCKET)*lpParameter;
 
-	SOCKET Server_Socket;
-	Server_Socket = *lpParameter;
+    while (true)
+    {
+        int bytes = recv(t_socket, (char *)&m, (int)sizeof(m), 0);
 
-	Message msg1;
+        if (bytes == 0) break;
+        if (m.buf[0] == '0')
+        {
+            printf("Close: %s\n\n", m.name);
+            break;
+        }
+        if (bytes == -1)
+        {
+            printf("Close: %s\n\n", m.name);
+            break;
+        }
 
-	while (true)
-	{
-		MessageLength = recv(Server_Socket, (char *)&msg1, (int)sizeof(msg1), 0);
+        FILE *fp;
+        char answer[DEFAULT_BUFLEN];
+        char buffer[DEFAULT_BUFLEN];
 
-		if (MessageLength == 0) break;
-		if (msg1.buf[0] == '0') { printf("Close: %s\n\n", msg1.name); break; }
-		if (MessageLength == -1) { printf("Close: %s\n\n", msg1.name); break; }
+        InitString(buffer, DEFAULT_BUFLEN);
+        InitString(answer, DEFAULT_BUFLEN);
 
-		FILE *fp;
-		char result[DEFAULT_BUFLEN];
-		char* fileName = msg1.name;
-		char* Message = msg1.buf;
-		char buffer[DEFAULT_BUFLEN];
+        if (m.nro_msg == 1)
+        {
+            fp = fopen(m.name, "w");
+            if (fp == NULL)
+            {
+                strcpy(answer, "File could not be created.");
+            }
+            else
+            {
+                strcpy(answer, "File successfully created.");
+                fclose(fp);
+            }
+        }
+        if (m.nro_msg == 2)
+        {
+            int status = remove(m.name);
+            if (!answer)
+            {
+                strcpy(answer, "File could not be deleted.");
+            }
+            else
+            {
+                strcpy(answer, "File successfully deleted.");
+            }
+        }
+        if (m.nro_msg == 3)
+        {
+            fp = fopen(m.name, "r+");
+            fscanf(fp, "%s", buffer);
+            strcpy(answer, buffer);
+            fclose(fp);
+        }
+        if (m.nro_msg == 4)
+        {
+            fp = fopen(m.name, "a+");
+            fprintf(fp, m.buf);
+            strcpy(answer, "File succesfully written.");
+            fclose(fp);
+        }
 
-		InitString(buffer, DEFAULT_BUFLEN);
-		InitString(result, DEFAULT_BUFLEN);
+        bytes = send(t_socket, (const char *)&answer, DEFAULT_BUFLEN, 0);
+        if (bytes == SOCKET_ERROR)
+        {
+            printf("send failed with error: %d\n", WSAGetLastError());
+            closesocket(t_socket);
+            WSACleanup();
+            return 1;
+        }
 
-		if (msg1.nro_msg == 1)
-		{
-			fp = fopen(fileName, "w");
-			if (fp == NULL)
-			{
-				strcpy(result, "File could not be created.");
-			}
-			else
-			{
-				strcpy(result, "File successfully created.");
-				fclose(fp);
-			}
-		}
-		if (msg1.nro_msg == 2)
-		{
-			int status = remove(fileName);
-			if (!result)
-			{
-				strcpy(result, "File could not be deleted.");
-			}
-			else
-			{
-				strcpy(result, "File successfully deleted.");
-			}
-		}
-		if (msg1.nro_msg == 3)
-		{
-			fp = fopen(fileName, "r+");
-			fscanf(fp, "%s", buffer);
-			strcpy(result, buffer);
-			fclose(fp);
-		}
-		if (msg1.nro_msg == 4)
-		{
-			fp = fopen(fileName, "a+");
-			fprintf(fp, Message);
-			strcpy(result, "File succesfully written.");
-			fclose(fp);
-		}
+        Sleep(10);
+    }
 
-		iSendResult = send(Server_Socket, (const char *)&result, DEFAULT_BUFLEN, 0);
-
-		if (iSendResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(Server_Socket);
-			WSACleanup();
-			return 1;
-		}
-		printf("Bytes sent: %d\n", iSendResult);
-		printf("Server sent = %s\n\n", result);
-
-		Sleep(10);
-	}
-	closesocket(Server_Socket);
-	return 0;
+    closesocket(t_socket);
+    return 0;
 }

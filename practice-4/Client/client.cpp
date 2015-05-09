@@ -136,35 +136,17 @@ DWORD WINAPI t_client(LPVOID lpParameter)
         }
 
         response = send(ClientSocket, (const char *)&m, (int)sizeof(m), 0);
-        if (response == SOCKET_ERROR)
-        {
-            printf("send failed with error: %d\n", response);
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }
-
-        printf("Client - Bytes Sent: %ld\n", response);
-
+        AssertNotEquals(response, SOCKET_ERROR, "send");
+        
         for (int i = 0; i < DEFAULT_BUFLEN; i++) serverResponse[i] = '\0';
-
         response = recv(ClientSocket, (char *)&serverResponse, DEFAULT_BUFLEN, 0);
 
-        printf("Client received-Message: %s\n\n", serverResponse);
-
+        printf("Server's answer: %s.\n", serverResponse);
         Sleep(10);
-
-        printf("Tecle: f - Para terminar ou c - Para enviar outra mensagem \n");
-        status = 'A';
-        while ((status != 'f') && (status != 'c'))
-        {
-            status = getchar();  Sleep(10);
-            getchar();
-        }
     }
 
     m.buf[0] = '0';
     response = send(ClientSocket, (const char *)&m, (int)sizeof(m), 0);
-    closesocket(ClientSocket);
+
     return 0;
 }
