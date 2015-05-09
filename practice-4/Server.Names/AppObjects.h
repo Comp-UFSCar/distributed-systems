@@ -9,4 +9,6 @@
 extern HANDLE Servidor;
 extern SOCKET Server_Socket;
 
+extern bool running;
+
 #endif /* APPOBJECTS_H */

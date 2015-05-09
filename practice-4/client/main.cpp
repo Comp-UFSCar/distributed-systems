@@ -3,7 +3,7 @@
 #include "AppObjects.h"
 #include "..\Infrastructure\communication.h"
 
-extern DWORD WINAPI thread_Cliente(LPVOID lpParameter);
+extern DWORD WINAPI t_client(LPVOID lpParameter);
 int main(int argc, char *argv[]);
 
 int main(int argc, char *argv[])
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     params.socktype = SOCK_STREAM;
     params.protocol = IPPROTO_TCP;
 
-    Cliente = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)thread_Cliente, &params, 0, 0);
+    Cliente = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)t_client, &params, 0, 0);
     WaitForSingleObject(Cliente, INFINITE);
 
     getchar();

@@ -1,12 +1,13 @@
 #define WIN32_LEAN_AND_MEAN
 #define TABLE_SIZE 30
 
-#include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "AppObjects.h"
 #include "..\Infrastructure\communication.h"
+#include "..\Infrastructure\validation.h"
+#include "..\Infrastructure\names_server_operations.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 
@@ -23,20 +24,34 @@ void *get_in_addr(struct sockaddr *sa)
 
 void tableRegister(char* name, char* ip, char* port)
 {
-    if (index <= TABLE_SIZE)
+    if (index == TABLE_SIZE)
     {
-        strcpy(table[index].name, name);
-        strcpy(table[index].ip, ip);
-        strcpy(table[index].port, port);
-
-        index++;
+        printf("Cannot create entry for %s, since the table is empty.", name);
+        return;
     }
+
+    printf("Created entry {%s -> %s:%s}\n", name, ip, port);
+ 
+    strcpy(table[index].name, name);
+    strcpy(table[index].ip, ip);
+    strcpy(table[index].port, port);
+
+    index++;
 }
 
 NameEntry tableQuery(char* name) {
+    printf("Request for {%s}... ", name);
+
     for (int i = 0; i < index; i++)
+    {
         if (strcmp(name, table[i].name))
+        {
+            printf("found.\n");
             return table[i];
+        }
+    }
+
+    printf("not found.\n");
 
     // Returns an error Message if server not found by name
     NameEntry error;
@@ -55,7 +70,7 @@ bool CheckOperation(NamesMessage *m)
         isOperation = true;
         tableRegister(m->entry.name, m->entry.ip, m->entry.port);
     }
-    else if (m->operation == OPERATION_RETRIEVE)
+    else if (m->operation == OPERATION_QUERY)
     {
         isOperation = true;
         tableQuery(m->entry.name);
@@ -64,12 +79,9 @@ bool CheckOperation(NamesMessage *m)
     return isOperation;
 }
 
-DWORD WINAPI thread_Servidor(LPVOID lpParameter);
-
 DWORD WINAPI thread_Servidor(LPVOID lpParameter)
 {
-    WSADATA wsaData;
-    int iResult;
+    int response;
     SOCKET Server_Socket = INVALID_SOCKET;
     int count_socket = 0;
 
@@ -83,18 +95,15 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
 
     int flag_on = 1;
 
-    printf("Sistemas Distribuidos: Servidor Inicializando ...\n\n");
+    printf("Names-server has started.\n");
 
     SocketParams *params;
     params = (SocketParams *)lpParameter;
 
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (iResult != 0)
-    {
-        printf("WSAStartup failed with error: %d\n", iResult);
-        return 1;
-    }
-
+    WSADATA wsaData;
+    response = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    AssertZero(response, "WSAStartup");
+    
     ZeroMemory(&hints, sizeof(hints));
 
     hints.ai_family = params->family;
@@ -102,59 +111,29 @@ DWORD WINAPI thread_Servidor(LPVOID lpParameter)
     hints.ai_protocol = params->protocol;
     hints.ai_flags = params->flags;
 
-    iResult = getaddrinfo(NULL, params->port, &hints, &result);
-
-    if (iResult != 0) {
-        printf("getaddrinfo failed with error: %d\n", iResult);
-        WSACleanup();
-        return 1;
-    }
+    response = getaddrinfo(NULL, params->port, &hints, &result);
+    AssertZero(response, "getaddrinfo");
 
     Server_Socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (Server_Socket == INVALID_SOCKET)
-    {
-        printf("socket failed with error: %ld\n", WSAGetLastError());
-        freeaddrinfo(result);
-        WSACleanup();
-        return 1;
-    }
+    AssertValidSocket(Server_Socket, "Server_Socket");
+    
+    response = setsockopt(Server_Socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag_on, sizeof(flag_on));
+    AssertPositive(response, "setsockopt");
 
-    if ((setsockopt(Server_Socket, SOL_SOCKET, SO_REUSEADDR, (char*)&flag_on,
-        sizeof(flag_on))) < 0)
-    {
-        perror("setsockopt() failed");
-        exit(1);
-    }
-
-    iResult = bind(Server_Socket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR)
-    {
-        printf("bind failed with error: %d\n", WSAGetLastError());
-        freeaddrinfo(result);
-        closesocket(Server_Socket);
-        WSACleanup();
-        return 1;
-    }
-
-    while (true)
+    response = bind(Server_Socket, result->ai_addr, (int)result->ai_addrlen);
+    AssertNotEquals(response, SOCKET_ERROR, "bind");
+    
+    while (running)
     {
         NamesMessage m;
 
-        printf("listener: waiting to recvfrom...\n");
+        printf("waiting...\n");
         addr_len = sizeof their_addr;
 
-        iResult = recvfrom(Server_Socket, (char *)&m, (int)sizeof(m), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
-        if (iResult == -1)
-        {
-            printf("Erro-Close\n\n");
-            break;
-        }
-
+        response = recvfrom(Server_Socket, (char *)&m, (int)sizeof(m), 0, (struct sockaddr *)&their_addr, (int *)&addr_len);
+        if (response < 0) break;
+        
         bool isOperation = CheckOperation(&m);
-
-        printf("Listener: got packet from %s\n", inet_ntop(their_addr.ss_family,
-            get_in_addr((struct sockaddr *)&their_addr), s, sizeof s));
-        printf("Listener: packet is %d bytes long\n", iResult);
 
         Sleep(10);
     }
