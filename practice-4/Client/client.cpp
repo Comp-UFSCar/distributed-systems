@@ -3,6 +3,7 @@
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <string>
 #include <cstdio>
 #include <iostream>
@@ -66,8 +67,27 @@ NameEntry QueryName(char *name)
     return m.entry;
 }
 
+void handler(int dummy)
+{
+    if (ClientSocket != INVALID_SOCKET)
+    {
+        Message m;
+        m.buf[0] = '0';
+        int response = send(ClientSocket, (const char *)&m, (int)sizeof(m), 0);
+
+        closesocket(ClientSocket);
+        WSACleanup();
+
+        ClientSocket = INVALID_SOCKET;
+
+        printf("\nbye.\n");
+    }
+}
+
 DWORD WINAPI t_client(LPVOID lpParameter)
 {
+    signal(SIGINT, handler);
+
     SocketParams *params = (SocketParams *)lpParameter;
 
     SOCKET ConnectSocket = INVALID_SOCKET;
@@ -116,8 +136,7 @@ DWORD WINAPI t_client(LPVOID lpParameter)
         break;
     }
     
-    char status = 'A';
-    while (status != 'f')
+    while (true)
     {
         printf("Insert file name: ");
         gets(m.name);
@@ -144,9 +163,6 @@ DWORD WINAPI t_client(LPVOID lpParameter)
         printf("Server's answer: %s.\n", serverResponse);
         Sleep(10);
     }
-
-    m.buf[0] = '0';
-    response = send(ClientSocket, (const char *)&m, (int)sizeof(m), 0);
 
     return 0;
 }
