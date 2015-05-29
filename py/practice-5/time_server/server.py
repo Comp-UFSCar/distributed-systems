@@ -26,7 +26,7 @@ class TimeServer(object):
                 response = str(datetime.now())
                 print('Responding %s to %s.' % (response, str(host_address)))
 
-                self.connection.sendto(response, host_address)
+                self.connection.sendto(bytes(response, encoding='utf8'), host_address)
 
             except KeyboardInterrupt:
                 return self.stop()
