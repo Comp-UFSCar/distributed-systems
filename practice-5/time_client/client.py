@@ -3,6 +3,7 @@ import socket
 import config
 import threading
 import time
+from datetime import datetime
 
 
 class TimeClient(object):
@@ -14,19 +15,22 @@ class TimeClient(object):
     def start(self):
         print('Client is starting!')
 
+        start = datetime.now()
+
         try:
-            while True:
-                time.sleep(2)
+            self.connection.sendto(b':cristian', self.server_address)
+            data, address = self.connection.recvfrom(self.buffer_length)
 
-                self.connection.sendto(b'hellooooooo', self.server_address)
-                data, address = self.connection.recvfrom(self.buffer_length)
+            elapsed = datetime.now() - start
 
-                print('%s: %s.' % (data, str(address)))
+            server_time = datetime.strptime(str(data, encoding='utf8'), '%Y-%m-%d %H:%M:%S.%f') + elapsed / 2
+
+            print('%s: %s' % (str(address), data))
+            print('Elapsed: %s, estimated server time: %s\n' % (elapsed, server_time))
+
+            self.connection.close()
 
         except KeyboardInterrupt:
-            return self.stop()
-
-    def stop(self):
-        self.connection.close()
-
+            pass
+ 
         return self
