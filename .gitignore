@@ -39,3 +39,5 @@ Debug/
 
 # database files
 *sdf
+
+__pycache__/
