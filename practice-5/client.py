@@ -1,9 +1,28 @@
+import re
 import socket
-import time
-import sys
-from datetime import datetime
+import datetime
 
 import config
+
+
+def parseTimeDelta(s):
+    """Create timedelta object representing time delta
+       expressed in a string
+
+    Takes a string in the format produced by calling str() on
+    a python timedelta object and returns a timedelta instance
+    that would produce that string.
+
+    Acceptable formats are: "X days, HH:MM:SS" or "HH:MM:SS".
+
+    P.s (lucas): function copied from
+    <http://kbyanc.blogspot.com.br/2007/08/python-reconstructing-timedeltas-from.html>.
+    """
+    if s is None:
+        return None
+
+    d = re.match(r'((?P<days>\d+) days, )?(?P<hours>\d+):' r'(?P<minutes>\d+):(?P<seconds>\d+)', s).groupdict(0)
+    return datetime.timedelta(**dict(((key, int(value)) for key, value in d.items())))
 
 
 class TimeClient(object):
@@ -14,40 +33,64 @@ class TimeClient(object):
 
         self.connection = connection or socket.socket(type=socket.SOCK_DGRAM)
 
-    def _cristian(self, data, address, elapsed):
+    def _cristian(self):
+        start = datetime.datetime.now()
+
+        self.connection.sendto(b':sync-cristian', self.server_address)
+        data, address = self.connection.recvfrom(self.buffer)
+
+        elapsed = datetime.datetime.now() - start
+
+        # Parse remote time from string.
+        remote_time = datetime.datetime.strptime(str(data, encoding='utf-8'), "%Y-%m-%d %H:%M:%S.%f")
+
+        print('%s:%i: %s, taking %s.' % (address[0], address[1], data, str(elapsed)))
+
+        # Calculate Cristian's algorithm result.
+        return remote_time + elapsed / 2
+
+    def _berkley(self):
+        start = datetime.datetime.now()
+
+        data = bytes(str(datetime.datetime.now()), encoding='utf-8')
+        self.connection.sendto(data, self.server_address)
+
+        # The server answered with the necessary offset to sync.
+        data, address = self.connection.recvfrom(self.buffer)
+        print('%s: %s.' % (str(address), data))
+
         data = str(data, encoding='utf-8')
 
-        return datetime.strptime(data, "%Y-%m-%d %H:%M:%S.%f") + elapsed / 2
-
-    def _berkley(self, data, address, elapsed):
-        data = str(data, encoding='utf-8')
-
-        return datetime.strptime(data, "%Y-%m-%d %H:%M:%S.%f")
+        offset_to_sync = parseTimeDelta(data)
+        return offset_to_sync
 
     def start(self):
-        print('Client is about to request time from %s.' % str(self.server_address))
+        print('%s request -> %s.' % (self.algorithm, str(self.server_address)))
 
         try:
-            start = datetime.now()
+            if self.algorithm == 'berkley-commit':
+                self.connection.sendto(b':sync-berkley', self.server_address)
+                return
 
-            local_time = datetime.now()
+            elif self.algorithm == 'cristian':
+                synced_time = self._cristian()
 
-            self.connection.sendto(bytes(str(local_time), encoding='utf-8'), self.server_address)
-            data, address = self.connection.recvfrom(self.buffer)
-
-            elapsed = datetime.now() - start
-
-            print('%s: %s, taking %s.' % (':'.join([str(s) for s in address]), data, str(elapsed)))
-
-            if self.algorithm == 'cristian':
-                sync_time = self._cristian(data, address, elapsed)
             elif self.algorithm == 'berkley':
-                sync_time = self._berkley(data, address, elapsed)
+                offset_to_sync = self._berkley()
 
-            print('Synchronized time is %s.' % sync_time)
+                synced_time = datetime.datetime.now() + offset_to_sync
+
+            print('Synchronized time is %s.' % synced_time)
 
         except KeyboardInterrupt:
+            pass
+
+        return self.stop()
+
+    def stop(self):
+        if self.connection:
             self.connection.close()
+            self.connection = None
 
         return self
 
@@ -58,7 +101,7 @@ if __name__ == '__main__':
     default_server_address = '127.0.0.1:' + str(config.port)
 
     parser = argparse.ArgumentParser(description='TimeClient')
-    parser.add_argument('algorithm', help='The algorithm to be executed (cristian or berkley)')
+    parser.add_argument('algorithm', help='The algorithm to be executed (cristian, berkley or berkley-commit)')
     parser.add_argument('--address', default=default_server_address,
                         help='The address of the time server (default: %s)' % default_server_address)
 
