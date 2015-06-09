@@ -1,6 +1,7 @@
 import random
 import socket
 import sys
+import threading
 import time
 from datetime import datetime, timedelta
 
@@ -8,6 +9,7 @@ import config
 
 
 class Synchronizer(object):
+    clients = set()
     differences = dict()
 
     @staticmethod
@@ -58,19 +60,16 @@ class Synchronizer(object):
 
 
 class TimeServer(object):
-    def __init__(self, port=config.port, buffer=config.buffer, timeout=config.timeout,
-                 connection=socket.socket(type=socket.SOCK_DGRAM), synchronizer=Synchronizer()):
+    def __init__(self, port=config.port, synchronizer=Synchronizer()):
         self.local_address = ('', int(port))
-        self.buffer = buffer
-
-        self.timeout = timeout
 
         # unwrap server_response_delay_range dividing it by 2, as simulate_delay is called twice,
         # simulating receiving delay and sending delay.
         self.min_response_delay, self.max_response_delay = [x / 2 for x in config.server_response_delay_range]
 
         self.synchronizer = synchronizer
-        self.connection = connection
+
+        self.listening_worker = None
 
     def simulate_delay(self):
         time.sleep(random.random()
@@ -79,19 +78,24 @@ class TimeServer(object):
 
     def start(self):
         print('TimeServer is starting at %s...' % str(self.local_address))
+        self._listen()
+        print('bye')
 
-        self.connection.bind(self.local_address)
-        self.connection.settimeout(.1)
+    def _listen(self):
+        listen_s = socket.socket(type=socket.SOCK_DGRAM)
+        listen_s.bind(self.local_address)
+        listen_s.settimeout(.1)
 
         while True:
             try:
                 start = datetime.now()
 
                 try:
-                    data, address = self.connection.recvfrom(self.buffer)
-                    data = str(data, encoding='utf-8')
+                    data, address = listen_s.recvfrom(config.buffer)
                 except socket.timeout:
                     continue
+
+                data = str(data, encoding='utf-8')
 
                 self.simulate_delay()
 
@@ -100,31 +104,58 @@ class TimeServer(object):
                 print('%s: %s.' % (str(address), data))
 
                 if data == ':sync-cristian':
-                    self._cristian(address)
+                    t = threading.Thread(target=self._cristian, args=(address,))
                 elif data == ':sync-berkley':
-                    self._berkley_step_2(address)
+                    t = threading.Thread(target=self._berkley, args=(address,))
+                elif data == ':berkley-commit':
+                    t = threading.Thread(target=self._berkley_commit, args=(address,))
                 else:
-                    self._berkley_step_1(address, data, elapsed)
+                    continue
+
+                t.daemon = True
+                t.start()
 
             except KeyboardInterrupt:
-                return self.stop()
+                listen_s.close()
+                return
 
     def _cristian(self, address):
         # If a client has requested cristian's algorithm, return server's current time.
         response = str(datetime.now())
 
         self.simulate_delay()
-        self.connection.sendto(bytes(response, encoding='utf8'), address)
 
-    def _berkley_step_1(self, address, data, elapsed):
-        # If a client has sent their time, add it to the synchronizer, using cristian's algorithm to amend the delay.
-        remote_time = datetime.strptime(data, "%Y-%m-%d %H:%M:%S.%f")
-        remote_time += elapsed / 2
+        s = socket.socket(type=socket.SOCK_DGRAM)
+        s.bind(('', 0))
+        s.sendto(bytes(response, encoding='utf8'), address)
 
-        self.synchronizer.add(address, remote_time)
+        s.close()
 
-    def _berkley_step_2(self, address):
-        # If a client has requested berkley's algorithm, ask their time.
+    def _berkley(self, address):
+        self.synchronizer.clients.add(address)
+
+    def _berkley_commit(self, args):
+        # If a client has requested berkley-commit, ask their time and add it to the synchronizer.
+        s = socket.socket()
+        s.bind(('', 0))
+        s.settimeout(config.timeout)
+
+        # Requests all clients' timestamps.
+        for address in self.synchronizer.clients:
+            print(':sync-berkley -> %s' % str(address))
+            start = datetime.now()
+
+            s.sendto(b':sync-berkley', address)
+            data, address = s.recvfrom(config.buffer)
+            print('%s sent us %s.' % (str(address), data))
+
+            elapsed = datetime.now() - start
+
+            remote_time = datetime.strptime(str(data, encoding='utf-8'), "%Y-%m-%d %H:%M:%S.%f")
+            remote_time += elapsed / 2
+
+            self.synchronizer.add(address, remote_time)
+
         offsets = self.synchronizer.offsets
 
         self.simulate_delay()
@@ -133,15 +164,11 @@ class TimeServer(object):
             data = bytes(str(offset), encoding='utf-8')
             address = self.synchronizer.address_from_key(key)
 
-            self.connection.sendto(data, address)
+            s.sendto(data, address)
 
         self.synchronizer.clear()
+        s.close()
 
-    def stop(self):
-        self.connection.close()
-        print('Bye')
-
-        return self
 
 if __name__ == '__main__':
     port = sys.argv[1] if len(sys.argv) > 1 else config.port

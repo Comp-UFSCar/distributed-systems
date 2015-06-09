@@ -32,6 +32,7 @@ class TimeClient(object):
         self.algorithm = algorithm
 
         self.connection = connection or socket.socket(type=socket.SOCK_DGRAM)
+        self.connection.bind(('127.0.0.1', 0))
 
     def _cristian(self):
         start = datetime.datetime.now()
@@ -50,16 +51,20 @@ class TimeClient(object):
         return remote_time + elapsed / 2
 
     def _berkley(self):
-        start = datetime.datetime.now()
+        self.connection.sendto(b':sync-berkley', self.server_address)
 
-        data = bytes(str(datetime.datetime.now()), encoding='utf-8')
-        self.connection.sendto(data, self.server_address)
-
-        # The server answered with the necessary offset to sync.
+        # The server answered with a new socket, its reference is stored in address.
         data, address = self.connection.recvfrom(self.buffer)
         print('%s: %s.' % (str(address), data))
 
+        # Finally, send our current time.
+        data = bytes(datetime.datetime.now(), encoding='utf-8')
+        self.connection.sendto(data, address)
+
+        data, address = self.connection.recvfrom(self.buffer)
         data = str(data, encoding='utf-8')
+
+        print('%s -> %s.' % (str(address), data))
 
         offset_to_sync = parseTimeDelta(data)
         return offset_to_sync
@@ -69,7 +74,7 @@ class TimeClient(object):
 
         try:
             if self.algorithm == 'berkley-commit':
-                self.connection.sendto(b':sync-berkley', self.server_address)
+                self.connection.sendto(b':berkley-commit', self.server_address)
                 return
 
             elif self.algorithm == 'cristian':
