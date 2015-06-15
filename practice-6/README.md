@@ -3,6 +3,8 @@
 ## Introdução
 Exemplo de sincronia distribuída utilizando um serviço sincronizador escrito em uma linguagem diferente dos programas de mensagem.
 
+O repositório do projeto pode ser [encontrado aqui](https://github.com/lucasdavid/distributed-systems/tree/master/practice-6).
+
 ### Alunos
 * Lucas Oliveira David 407917
 
