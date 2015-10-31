@@ -1,5 +1,6 @@
 # Distributed Systems
 
-## Author
-Lucas Oliveira David
-João Vitor brandão Moreira
+Assignments for Distributed Systems class at Universidade Federal de São Carlos.
+
+* [Lucas Oliveira David](lucasolivdavid@gmail.com)
+* [João Vitor brandão Moreira](jvbrandaom@gmail.com)
